@@ -1,8 +1,9 @@
 
-const express = require("express");
 require("dotenv").config();
 
-const pool = require("./db");
+const express = require("express");
+const connectDB = require("./db");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -16,18 +17,14 @@ app.get("/", (req, res) => {
 
 app.get("/health", async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT NOW() AS current_time"
-    );
+    await mongoose.connection.db.admin().ping();
 
     res.json({
       status: "ok",
       database: "connected",
-      time: result.rows[0].current_time,
+      databaseName: mongoose.connection.name,
     });
   } catch (error) {
-    console.error("Database health check failed:", error.message);
-
     res.status(500).json({
       status: "error",
       database: "disconnected",
@@ -37,6 +34,12 @@ app.get("/health", async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+async function startServer() {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+startServer();

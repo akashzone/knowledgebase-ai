@@ -7,7 +7,7 @@ An AI-powered customer support assistant that helps businesses answer customer q
 
 Businesses often receive repetitive customer questions about shipping, returns, product information, and company policies. The answers may already exist in their documentation, but finding and responding to every question manually takes time.
 
-KnowledgeBase AI allows a business to upload its PDF documents and create an AI-powered support assistant that customers can interact with through an embeddable chat widget.
+KnowledgeBase AI allows a business to upload PDF documents and create an AI-powered support assistant that customers can interact with through an embeddable chat widget.
 
 The system retrieves relevant information from the business's knowledge base, generates answers using that information, and provides source citations so users can understand where the answers came from.
 
@@ -35,8 +35,9 @@ The following features are planned for the project:
 |---|---|
 | Frontend dashboard | React, Vite |
 | Backend API | Node.js, Express.js |
-| Database | PostgreSQL |
-| Vector search | pgvector |
+| Database | MongoDB Atlas |
+| ODM | Mongoose |
+| Vector search | MongoDB Atlas Vector Search |
 | Background jobs | Redis, BullMQ |
 | AI and embeddings | Gemini API |
 | Authentication | JWT, bcrypt |
@@ -53,7 +54,7 @@ The following features are planned for the project:
 2. The backend stores the document and queues a background job.
 3. A worker extracts the text and divides it into smaller chunks.
 4. An embedding model converts the chunks into numerical vectors.
-5. The text, metadata, and embeddings are stored in PostgreSQL with pgvector.
+5. The text, metadata, and embeddings are stored in MongoDB Atlas.
 
 ### 2. Question Answering
 
@@ -79,22 +80,22 @@ Business Owner
       v
  Node.js / Express API
       |
-      +------> PostgreSQL + pgvector
+      +------> MongoDB Atlas
       |              ^
       |              |
       +------> Redis / BullMQ
                      |
                      v
-               Background Worker
+              Background Worker
                      |
-             Extract PDF Text
+              Extract PDF Text
                      |
-                Chunk Text
+                 Chunk Text
                      |
               Create Embeddings
                      |
                      v
-               PostgreSQL
+                MongoDB Atlas
 
 
 Customer Website
@@ -104,8 +105,8 @@ Customer Website
       |
       v
  Chat API --> Vector Search --> Gemini API
-      |                              |
-      +----------> Answer + Sources <-+
+      |                            |
+      +--------> Answer + Sources <-+
 ```
 
 ## Project Structure
@@ -114,6 +115,7 @@ Customer Website
 knowledgebase-ai/
 ├── server/
 │   ├── src/
+│   │   ├── models/
 │   │   ├── routes/
 │   │   ├── controllers/
 │   │   ├── middleware/
@@ -121,8 +123,8 @@ knowledgebase-ai/
 │   │   ├── queue/
 │   │   ├── workers/
 │   │   ├── config/
+│   │   ├── db.js
 │   │   └── app.js
-│   ├── migrations/
 │   └── tests/
 ├── client/
 ├── widget/
@@ -142,18 +144,73 @@ This project is currently under development. Setup instructions will be updated 
 
 - Node.js and npm
 - Docker and Docker Compose
-- PostgreSQL with the pgvector extension
+- MongoDB Atlas account
 - Redis
 - A Gemini API key
 
-### Planned Setup
+### Installation
 
-1. Clone the repository.
-2. Configure environment variables using `.env.example`.
-3. Start PostgreSQL and Redis using Docker Compose.
-4. Install backend and frontend dependencies.
-5. Run database migrations.
-6. Start the API server, background worker, and React dashboard.
+**1. Clone the repository**
+
+```bash
+git clone <repository-url>
+cd knowledgebase-ai
+```
+
+**2. Configure MongoDB Atlas**
+
+- Create a MongoDB Atlas cluster.
+- Create a database user with appropriate permissions.
+- Configure your network access.
+- Copy your MongoDB connection string.
+
+**3. Configure environment variables**
+
+Create a `.env` file inside the `server` directory.
+
+```env
+PORT=5000
+
+MONGODB_URI=your_mongodb_atlas_connection_string
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+**4. Start Redis**
+
+From the project root:
+
+```bash
+docker compose up -d
+```
+
+**5. Install backend dependencies**
+
+```bash
+cd server
+npm install
+```
+
+**6. Start the development server**
+
+```bash
+npm run dev
+```
+
+The API will be available at:
+
+```text
+http://localhost:5000
+```
+
+The health endpoint can be accessed at:
+
+```text
+http://localhost:5000/health
+```
 
 Never commit API keys, database credentials, JWT secrets, or other sensitive environment variables.
 
@@ -172,8 +229,9 @@ The implementation will focus on:
 
 ## Development Roadmap
 
-- [ ] Set up PostgreSQL, pgvector, and Redis.
-- [ ] Design the database schema and migrations.
+- [x] Initialize backend and configure Docker services.
+- [x] Configure MongoDB Atlas connection.
+- [ ] Design Mongoose schemas and data models.
 - [ ] Implement authentication and workspaces.
 - [ ] Build PDF extraction, chunking, and embedding.
 - [ ] Implement semantic retrieval and cited answers.
@@ -189,7 +247,8 @@ The implementation will focus on:
 This project is intended to provide practical experience with:
 
 - Backend API design and database modelling.
-- PostgreSQL, SQL, and vector similarity search.
+- MongoDB, Mongoose, and database indexing.
+- Vector similarity search.
 - Retrieval-Augmented Generation (RAG).
 - Asynchronous processing and job queues.
 - Multi-tenant application architecture.
